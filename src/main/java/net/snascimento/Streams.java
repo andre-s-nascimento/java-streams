@@ -1,11 +1,14 @@
 package net.snascimento;
 
-import static java.util.stream.Collectors.toList;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Streams {
 
@@ -32,7 +35,7 @@ public class Streams {
     List<Integer> numerosUnsorted = Arrays.asList(5, 3, 1, 4, 2);
     List<Integer> numerosSorted = numerosUnsorted.stream()
         .sorted()
-        .collect(toList());
+        .toList();
     // numerosSorted vai conter 1, 2, 3, 4, 5
 
     numerosUnsorted.forEach(System.out::println);
@@ -48,7 +51,7 @@ public class Streams {
         new Pessoa("Manoel", 28)
     );
     Map<Integer, List<Pessoa>> pessoasByIdade = pessoas.stream()
-        .collect(Collectors.groupingBy(Pessoa::getIdade));
+        .collect(groupingBy(Pessoa::getIdade));
     //pessoasByIdade vai ter um Map como abaixo
     // [22, [Pessoa{nome='Renato', idade=22}] ]
     // [26, [Pessoa{nome='Rafaela', idade=26}, Pessoa{nome='Rodolfo', idade=26}] ]
@@ -72,6 +75,55 @@ public class Streams {
     List<String> nomesLista = Arrays.asList("Joao", "Paulo", "Rafaela", "Renato");
     nomesLista.parallelStream()
         .forEach(nome -> System.out.println("Ola, " + nome + "!"));
+    // Os nomes são listados 'fora da ordem' por estarem sendo executados em paralelo
+
+    List<List<Integer>> numerosFlatMap = Arrays.asList(
+        Arrays.asList(1, 2, 3),
+        Arrays.asList(4, 5, 6),
+        Arrays.asList(7, 8, 9)
+    );
+    List<Integer> numerosAchatados = numerosFlatMap.stream()
+        .flatMap(Collection::stream)
+        .toList();
+    // as 3 listas de números passam a ser uma só stream
+    // e são coletadas em uma nova lista
+    // [1,2,3,4,5,6,7,8,9]
+
+    System.out.println(numerosAchatados);
+
+    String[] arrayDePalavras = {"Java", "Streams", "é", "a", "melhor", "API", "que", "tem", "em",
+        "Java"};
+    Stream<String> streamDePalavras = Arrays.stream(arrayDePalavras);
+    Map<String, Long> contadorDePalavrasUnicas = streamDePalavras
+        .map(linha -> linha.split("\\s+"))
+        .flatMap(Arrays::stream)
+        .distinct()
+        .collect(groupingBy(identity(), counting()));
+    // Cria um map que conta as palavras únicas em um stream
+    // {que, 1}, {a, 1}, {Java, 2}, {melhor, 1}, {em, 1}, {é, 1},
+    // {API, 1}, {tem, 1}, {Streams, 1}
+
+    for (Map.Entry<String, Long> letra : contadorDePalavrasUnicas.entrySet()) {
+      System.out.println("{" + letra.getKey() + ", " + letra.getValue() + "}");
+    }
+    System.out.println();
+
+    Stream<String> palavras = Stream.of("Java", "Streams", "é", "a", "melhor", "API", "que", "tem",
+        "em", "Java");
+    Map<String, Long> letrasParaContar =
+        palavras.map(palavra -> palavra.split(""))
+            .flatMap(Arrays::stream)
+            .collect(groupingBy(identity(), counting()));
+    // Cria um map que tem a quantidade de letras de um grupo de Strings
+    // {A, 1}, {a, 6}, {e, 5}, {h, 1}, {I, 1}, {é, 1}, {J, 2}, {l, 1},
+    // {m, 4}, {o, 1}, {P, 1}, {q, 1}, {r, 2}, {s, 1}, {S, 1}, {t, 2},
+    // {u, 1}, {v, 2}
+
+    for (Map.Entry<String, Long> letras : letrasParaContar.entrySet()) {
+      System.out.print("{" + letras + "}, ");
+    }
+    System.out.println();
+
 
   }
 
